@@ -1,0 +1,14 @@
+Submission Files
+
+    lab1.c:
+        source file
+
+    Makefile
+
+    README
+
+Limitation
+    When ^C is entered in the '--shell' mode, the terminal does not
+    end the program immediately. It only ends the program when the user 
+    continueto type the next input because that is when it receive the 
+    SIGPIPE signal for trying to write to a dead shell.

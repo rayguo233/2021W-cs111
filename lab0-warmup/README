@@ -1,0 +1,27 @@
+test.sh:
+    shell script that does a simple smoke-test on lab0
+    
+    test cases:
+        check if input content is the same as output content:
+            neither input file or output file specified
+            only input file specified
+            only output file specified
+            both input and output file specified
+        check if exit code is correct:
+            exit with 0 for the 4 cases above
+            exit with 1 when unrecognized argument given
+            exit with 2 when unable to open input file
+            exit with 3 when unable to open output file
+            exit with 4 when caught and received SIGSEGV
+
+lab0.c:
+    C source file for lab0
+backtrace.png:
+    screenshot showing a segfault and associated stack-trace in gdb
+breakpoint.png:
+    screenshot showing a breakpoint and variable inspection in gdb
+Makefile:
+    the makefile to build the program and the tarball
+README:
+    identification information, description of the included files and 
+    the smoke-test cases in the check target

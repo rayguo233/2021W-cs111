@@ -1,0 +1,21 @@
+Submission Files
+
+    lab1b-server.c, lab1b-client.c:
+        source files
+    Makefile
+    README
+
+Some Comments
+    I haven't figured out any clever way to seperate
+    output from the shell program to the server into
+    batches. So I just grouped any continuous stream of
+    bytes from the shell to the server as a batch, and
+    then compress that batch and send over to the user.
+    There might be cases where the output of one command
+    get sent to the server in several batches.
+
+    In the case of the client side script, I seperate batches
+    by the user's '\n' input.
+
+    I haven't got anything that handles fprintf() error,
+    because I use fprintf() in error handling...

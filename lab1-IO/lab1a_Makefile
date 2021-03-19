@@ -1,0 +1,21 @@
+
+CC = /usr/local/cs/gcc-9.3.0/bin/gcc
+CFLAGS = -o
+WARN = -Wall -Wextra
+SRC = lab1.c
+OUT = lab1a
+TAR = lab1a-123456789.tar.gz
+SUBMIT = lab1.c Makefile README
+
+default: $(OUT)
+
+$(OUT): $(SRC) 
+	$(CC) $(WARN) $(CFLAGS) $(OUT) $(SRC)
+	
+clean:
+	rm -f $(OUT) $(TAR)
+
+dist: $(TAR)
+
+$(TAR): $(SUBMIT)
+	tar -czvf $(TAR) $(SUBMIT)

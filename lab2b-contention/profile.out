@@ -1,0 +1,189 @@
+Total: 1284 samples
+    1139  88.7%  88.7%     1139  88.7% lock_general
+      51   4.0%  92.7%       51   4.0% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:203
+      19   1.5%  94.2%       19   1.5% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+      17   1.3%  95.5%       83   6.5% SortedList_insert
+      13   1.0%  96.5%       13   1.0% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+      11   0.9%  97.4%       62   4.8% SortedList_lookup
+       5   0.4%  97.7%        5   0.4% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:161
+       5   0.4%  98.1%        5   0.4% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:205
+       5   0.4%  98.5%        5   0.4% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       4   0.3%  98.8%        4   0.3% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       3   0.2%  99.1%        3   0.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:165
+       3   0.2%  99.3%        3   0.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:212
+       2   0.2%  99.5%        2   0.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:164
+       2   0.2%  99.6%        2   0.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:206
+       2   0.2%  99.8%        2   0.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:211
+       2   0.2%  99.9%        2   0.2% _init
+       1   0.1% 100.0%        1   0.1% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1733
+       0   0.0% 100.0%     1284 100.0% ?? /usr/src/debug////////glibc-2.17-c758a686/misc/../sysdeps/unix/sysv/linux/x86_64/clone.S:118
+       0   0.0% 100.0%     1284 100.0% start_thread
+       0   0.0% 100.0%     1284 100.0% thread_worker
+ROUTINE ====================== thread_worker in /u/eng/class/classsgu/cs111/lab2b/lab2_list.c
+     0   1284 Total samples (flat / cumulative)
+     .      .  234: 		fprintf(stderr, "incorrect option for '--sync': only {s,m} are allowed\n");	
+     .      .  235: 		exit(1);
+     .      .  236: 	}
+     .      .  237: }
+     .      .  238: 
+---
+     .      .  239: void * thread_worker(void *arg) {
+     .      .  240: 	unsigned long i = 0;
+     .      .  241: 	int ret;
+     .      .  242: 	int list_num;
+     .      .  243: 	unsigned long res = 0;
+     .      .  244:     SortedListElement_t *elements = (SortedListElement_t*) arg;
+     .      .  245: 	for (i = 0; i < niteratns; i++) {
+     .      .  246: 		list_num = get_list_num((elements+i)->key);
+     .      .  247: 		// printf("list: %d\n", list_num);
+     .    560  248: 		res += lock_general(list_num);
+     .     83  249:         SortedList_insert(&listheads[list_num], elements+i);
+     .      .  250: 		unlock_general(list_num);
+     .      .  251: 	}
+     .      .  252: 	for (int j; j < sublist_num; j++) {
+     .      2  253: 		res += lock_general(j);
+     .      .  254: 		if ((ret = SortedList_length(&listheads[j])) == -1) {
+     .      .  255: 			fprintf(stderr, "Error: length() - Linked list is corrupted\n");
+     .      .  256: 			exit(2);
+     .      .  257: 		};
+     .      .  258: 		unlock_general(j);
+     .      .  259: 		// printf("list: %d, length: %d\n", j, ret);
+     .      .  260: 	}
+     .      .  261: 	for (i = 0; i < niteratns; i++) {
+     .      .  262: 		list_num = get_list_num((elements+i)->key);
+     .      .  263: 		// printf("list_num: %d\n", list_num);
+     .    577  264: 		res += lock_general(list_num);
+     .     62  265: 		ret = SortedList_delete(SortedList_lookup(&listheads[list_num], (elements+i)->key));
+     .      .  266: 		unlock_general(list_num);
+     .      .  267: 		if (ret == 1) {
+     .      .  268: 			fprintf(stderr, "Error: delete() - corrtuped prev/next pointers\n");
+     .      .  269: 			exit(2);
+     .      .  270: 		}
+     .      .  271:     }
+     .      .  272: 	return (void *) res;
+     .      .  273: }
+---
+     .      .  274: 
+     .      .  275: unsigned long lock_general(int list_num) {
+     .      .  276: 	struct timespec begin, end;
+     .      .  277: 	unsigned long diff = 0;
+     .      .  278: 	switch (opt_sync) {
+ROUTINE ====================== thread_worker in /u/eng/class/classsgu/cs111/lab2b/lab2_list.c
+     0   1284 Total samples (flat / cumulative)
+     .      .  234: 		fprintf(stderr, "incorrect option for '--sync': only {s,m} are allowed\n");	
+     .      .  235: 		exit(1);
+     .      .  236: 	}
+     .      .  237: }
+     .      .  238: 
+---
+     .      .  239: void * thread_worker(void *arg) {
+     .      .  240: 	unsigned long i = 0;
+     .      .  241: 	int ret;
+     .      .  242: 	int list_num;
+     .      .  243: 	unsigned long res = 0;
+     .      .  244:     SortedListElement_t *elements = (SortedListElement_t*) arg;
+     .      .  245: 	for (i = 0; i < niteratns; i++) {
+     .      .  246: 		list_num = get_list_num((elements+i)->key);
+     .      .  247: 		// printf("list: %d\n", list_num);
+     .    560  248: 		res += lock_general(list_num);
+     .     83  249:         SortedList_insert(&listheads[list_num], elements+i);
+     .      .  250: 		unlock_general(list_num);
+     .      .  251: 	}
+     .      .  252: 	for (int j; j < sublist_num; j++) {
+     .      2  253: 		res += lock_general(j);
+     .      .  254: 		if ((ret = SortedList_length(&listheads[j])) == -1) {
+     .      .  255: 			fprintf(stderr, "Error: length() - Linked list is corrupted\n");
+     .      .  256: 			exit(2);
+     .      .  257: 		};
+     .      .  258: 		unlock_general(j);
+     .      .  259: 		// printf("list: %d, length: %d\n", j, ret);
+     .      .  260: 	}
+     .      .  261: 	for (i = 0; i < niteratns; i++) {
+     .      .  262: 		list_num = get_list_num((elements+i)->key);
+     .      .  263: 		// printf("list_num: %d\n", list_num);
+     .    577  264: 		res += lock_general(list_num);
+     .     62  265: 		ret = SortedList_delete(SortedList_lookup(&listheads[list_num], (elements+i)->key));
+     .      .  266: 		unlock_general(list_num);
+     .      .  267: 		if (ret == 1) {
+     .      .  268: 			fprintf(stderr, "Error: delete() - corrtuped prev/next pointers\n");
+     .      .  269: 			exit(2);
+     .      .  270: 		}
+     .      .  271:     }
+     .      .  272: 	return (void *) res;
+     .      .  273: }
+---
+     .      .  274: 
+     .      .  275: unsigned long lock_general(int list_num) {
+     .      .  276: 	struct timespec begin, end;
+     .      .  277: 	unsigned long diff = 0;
+     .      .  278: 	switch (opt_sync) {
+ROUTINE ====================== lock_general in /u/eng/class/classsgu/cs111/lab2b/lab2_list.c
+  1139   1139 Total samples (flat / cumulative)
+     .      .  270: 		}
+     .      .  271:     }
+     .      .  272: 	return (void *) res;
+     .      .  273: }
+     .      .  274: 
+---
+     .      .  275: unsigned long lock_general(int list_num) {
+     .      .  276: 	struct timespec begin, end;
+     .      .  277: 	unsigned long diff = 0;
+     .      .  278: 	switch (opt_sync) {
+     .      .  279: 		case M:
+     .      .  280: 			myclock_gettime(CLOCK_MONOTONIC, &begin);
+     .      .  281: 			pthread_mutex_lock(&mutexes[list_num]);
+     .      .  282: 			myclock_gettime(CLOCK_MONOTONIC, &end);
+     .      .  283: 			diff = get_nanosec_from_timespec(&end) - get_nanosec_from_timespec(&begin);
+     .      .  284: 			break;
+     .      .  285: 		case S:
+     .      .  286: 			myclock_gettime(CLOCK_MONOTONIC, &begin);
+  1139   1139  287: 			while (__sync_lock_test_and_set (&locks[list_num], 1)) {};
+     .      .  288: 			myclock_gettime(CLOCK_MONOTONIC, &end);
+     .      .  289: 			diff = get_nanosec_from_timespec(&end) - get_nanosec_from_timespec(&begin);
+     .      .  290: 			break;
+     .      .  291: 		default:
+     .      .  292: 			break;
+     .      .  293: 	}
+     .      .  294: 	return diff;
+     .      .  295: }
+---
+     .      .  296: 
+     .      .  297: void unlock_general(int list_num) {
+     .      .  298: 	switch (opt_sync) {
+     .      .  299: 		case M:
+     .      .  300: 			pthread_mutex_unlock(&mutexes[list_num]);
+ROUTINE ====================== lock_general in /u/eng/class/classsgu/cs111/lab2b/lab2_list.c
+  1139   1139 Total samples (flat / cumulative)
+     .      .  270: 		}
+     .      .  271:     }
+     .      .  272: 	return (void *) res;
+     .      .  273: }
+     .      .  274: 
+---
+     .      .  275: unsigned long lock_general(int list_num) {
+     .      .  276: 	struct timespec begin, end;
+     .      .  277: 	unsigned long diff = 0;
+     .      .  278: 	switch (opt_sync) {
+     .      .  279: 		case M:
+     .      .  280: 			myclock_gettime(CLOCK_MONOTONIC, &begin);
+     .      .  281: 			pthread_mutex_lock(&mutexes[list_num]);
+     .      .  282: 			myclock_gettime(CLOCK_MONOTONIC, &end);
+     .      .  283: 			diff = get_nanosec_from_timespec(&end) - get_nanosec_from_timespec(&begin);
+     .      .  284: 			break;
+     .      .  285: 		case S:
+     .      .  286: 			myclock_gettime(CLOCK_MONOTONIC, &begin);
+  1139   1139  287: 			while (__sync_lock_test_and_set (&locks[list_num], 1)) {};
+     .      .  288: 			myclock_gettime(CLOCK_MONOTONIC, &end);
+     .      .  289: 			diff = get_nanosec_from_timespec(&end) - get_nanosec_from_timespec(&begin);
+     .      .  290: 			break;
+     .      .  291: 		default:
+     .      .  292: 			break;
+     .      .  293: 	}
+     .      .  294: 	return diff;
+     .      .  295: }
+---
+     .      .  296: 
+     .      .  297: void unlock_general(int list_num) {
+     .      .  298: 	switch (opt_sync) {
+     .      .  299: 		case M:
+     .      .  300: 			pthread_mutex_unlock(&mutexes[list_num]);

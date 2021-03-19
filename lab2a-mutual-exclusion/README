@@ -1,0 +1,89 @@
+
+QUESTION 2.1.1 - causing conflicts:
+
+- Why does it take many iterations before errors are seen?
+    Because more operations on the shared data would be done. It's then
+    more likely that some of the operations overlap and causes race
+    condition.
+- Why does a significantly smaller number of iterations so seldom fail?
+    Because there is a small number of read-modify-write operations which
+    together only spans a short period of time. It's therefore less likely
+    that any of the two operations overlap with each other and cause race
+    condition.
+
+QUESTION 2.1.2 - cost of yielding:
+
+- Why are the --yield runs so much slower?
+    Because yield relies on systems calls. Context switching between user
+    and kernal mode is expensive.
+- Where is the additional time going?
+    The additional time went to context switching for system calls. There
+    might also be time wasted whem every thread is yielding and no one is
+    trying to use the CPU.
+- Is it possible to get valid per-operation timings if we are using the
+  --yield option?
+    Not possible.
+- If so, explain how. If not, explain why not.
+    As long as there is this uncertainty of how much time is wasted when
+    every thread happens to call yield simultaneously no thread is doing
+    real work, it's impossible to determine the real per-operation cost.
+
+QUESTION 2.1.3 - measurement errors:
+
+- Why does the average cost per operation drop with increasing iterations?
+    Because the overhead of creating and reaping threads become less
+    significant as more time is spent on the read-modify-write operations.
+- If the cost per iteration is a function of the number of iterations, how 
+  do we know how many iterations to run (or what the "correct" cost is)?
+    Running the program for large number of iterations should approximate
+    the cost better. We can try plotting the results and see if the
+    curve flattens with larger numbers of iterations. If so we can try
+    calculating the cost that the curve is approaching.
+
+QUESTION 2.1.4 - costs of serialization:
+
+- Why do all of the options perform similarly for low numbers of threads?
+    Because there is less contention for the shared data is less frequent,
+    and the threads often don't have wait for others to finish. Only the
+    overhead of checking is significant. The difference in waiting time is
+    not.
+- Why do the three protected operations slow down as the number of threads rises?
+    Because contention for the shared data is more frequent, threads often
+    have to wait for others to finish. The increasing waiting time increases
+    the cost.
+
+QUESTION 2.2.1 - scalability of Mutex
+
+- Compare the variation in time per mutex-protected operation vs the number
+  of threads in Part-1 (adds) and Part-2 (sorted lists).
+    In both cases, the time per operation seems to increase at first and 
+    then flattens as the number of threads becomes large enough. In the case
+    of lists, it also seems like the variation is much smaller.
+- Comment on the general shapes of the curves, and explain why they have this
+  shape.
+    In bothe cases the curve flattens as the number of threads gets large
+    enough. This is because mutex lock yields CPU when it's waiting. Even
+    if large number of threads increases waiting time, the CPU is still
+    doing useful work. The initial increase of the curve is due to increase
+    in contention for shared data that reduces the frequency of immediate
+    execution.
+- Comment on the relative rates of increase and differences in the shapes of
+  the curves, and offer an explanation for these differences.
+    The curve for the lists implementation increases and flattens out quicker
+    because the critical region for lists is larger and contention for this
+    region is more frequent among threads. The curve for additon increases
+    and flattens slower because their critical region is small.
+
+QUESTION 2.2.2 - scalability of spin locks
+
+- Compare the variation in time per protected operation vs the number of
+  threads for list operations protected by Mutex vs Spin locks. Comment on
+  the general shapes of the curves, and explain why they have this shape.
+    Both curves goes up with increasing number of threads because contention
+    for shared data increases causing more waiting time when number of 
+    threads increases.
+- Comment on the relative rates of increase and differences in the shapes of
+  the curves, and offer an explanation for these differences.
+    Cost for spin lock keeps increasing when costs for mutex locks flattens.
+    This is because spin lock does not give up the CPU. Longer waiting time,
+    for spin lock means linearly more wasted CPU time.
